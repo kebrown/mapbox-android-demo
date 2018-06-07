@@ -94,7 +94,7 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
   private void initTextViews() {
     latTextView = findViewById(R.id.geocode_latitude_editText);
     longTextView = findViewById(R.id.geocode_longitude_editText);
-    longTextView = findViewById(R.id.geocode_result_one);
+    longTextView = findViewById(R.id.geocode_result_message);
   }
 
   private void initButton() {
