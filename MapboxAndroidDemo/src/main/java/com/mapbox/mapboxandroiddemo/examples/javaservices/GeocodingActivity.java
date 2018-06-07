@@ -144,16 +144,6 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
     }
   }
 
-  /* public void toggleBottomSheet() {
-     if (sheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) {
-       sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-       btnBottomSheet.setText("Close sheet");
-     } else {
-       sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-       btnBottomSheet.setText("Expand sheet");
-     }
-   }
- */
   // Add the mapView lifecycle to the activity's lifecycle methods
   @Override
   public void onResume() {
