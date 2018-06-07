@@ -1,7 +1,6 @@
 package com.mapbox.mapboxandroiddemo.examples.javaservices;
 
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -102,6 +101,7 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
                 Toast.LENGTH_SHORT).show();
           }
         }
+
         @Override
         public void onFailure(Call<GeocodingResponse> call, Throwable throwable) {
           Log.e("GeocodingActivity", "Geocoding Failure: " + throwable.getMessage());
