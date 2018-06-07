@@ -227,5 +227,6 @@
     <string name="latitude">latitude</string>
     <string name="longitude">longitude</string>
     <string name="geocode">Geocode</string>
+    <string name="geocode_results">Geocode results: %1$s</string>
     <string name="no_results">No results!</string>
 </resources>

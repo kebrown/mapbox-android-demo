@@ -37,7 +37,7 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
   private Button startGeocodeButton;
   private TextView latTextView;
   private TextView longTextView;
-  private TextView geocodeResultOne;
+  private TextView geocodeResultTextView;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -62,39 +62,12 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
   public void onMapReady(MapboxMap mapboxMap) {
     initTextViews();
     initButton();
-    initListeners();
-    sheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-      @Override
-      public void onStateChanged(@NonNull View bottomSheet, int newState) {
-        switch (newState) {
-          case BottomSheetBehavior.STATE_HIDDEN:
-            break;
-          case BottomSheetBehavior.STATE_EXPANDED: {
-            Toast.makeText(GeocodingActivity.this, "Expanded", Toast.LENGTH_SHORT).show();
-          }
-          break;
-          case BottomSheetBehavior.STATE_COLLAPSED: {
-            Toast.makeText(GeocodingActivity.this, "Collapsed", Toast.LENGTH_SHORT).show();
-          }
-          break;
-          case BottomSheetBehavior.STATE_DRAGGING:
-            break;
-          case BottomSheetBehavior.STATE_SETTLING:
-            break;
-        }
-      }
-
-      @Override
-      public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-
-      }
-    });
   }
 
   private void initTextViews() {
     latTextView = findViewById(R.id.geocode_latitude_editText);
     longTextView = findViewById(R.id.geocode_longitude_editText);
-    longTextView = findViewById(R.id.geocode_result_message);
+    geocodeResultTextView = findViewById(R.id.geocode_result_message);
   }
 
   private void initButton() {
@@ -108,10 +81,6 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
     });
   }
 
-  private void initListeners() {
-
-  }
-
   private void makeGeocodeSearch(LatLng latLng) {
     try {
       MapboxGeocoding client = MapboxGeocoding.builder()
@@ -119,20 +88,20 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
           .query(Point.fromLngLat(latLng.getLongitude(), latLng.getLatitude()))
           .geocodingTypes(GeocodingCriteria.TYPE_COUNTRY)
           .build();
-
       client.enqueueCall(new Callback<GeocodingResponse>() {
         @Override
-        public void onResponse(Call<GeocodingResponse> call, Response<GeocodingResponse> response) {
-
+        public void onResponse(Call<GeocodingResponse> call,
+                               Response<GeocodingResponse> response) {
           List<CarmenFeature> results = response.body().features();
           if (results.size() > 0) {
             CarmenFeature feature = results.get(0);
-            longTextView.setText(feature.placeName());
+            geocodeResultTextView.setText(String.format(getString(R.string.geocode_results),
+                feature.placeName()));
           } else {
-            Toast.makeText(GeocodingActivity.this, R.string.no_results, Toast.LENGTH_SHORT).show();
+            Toast.makeText(GeocodingActivity.this, R.string.no_results,
+                Toast.LENGTH_SHORT).show();
           }
         }
-
         @Override
         public void onFailure(Call<GeocodingResponse> call, Throwable throwable) {
           Log.e("GeocodingActivity", "Geocoding Failure: " + throwable.getMessage());
