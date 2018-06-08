@@ -19,4 +19,5 @@
     <!-- Adding bottom sheet after main content -->
     <include layout="@layout/geocoding_bottom_sheet" />
 
+
 </android.support.design.widget.CoordinatorLayout>

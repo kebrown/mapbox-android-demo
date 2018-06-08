@@ -18,6 +18,8 @@ import com.mapbox.core.exceptions.ServicesException;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxandroiddemo.R;
 import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
@@ -32,11 +34,13 @@ import retrofit2.Response;
 public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCallback {
 
   private MapView mapView;
+  private MapboxMap mapboxMap;
   private BottomSheetBehavior sheetBehavior;
   private Button startGeocodeButton;
   private TextView latTextView;
   private TextView longTextView;
   private TextView geocodeResultTextView;
+  private String TAG = "GeocodingActivity";
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +63,7 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
 
   @Override
   public void onMapReady(MapboxMap mapboxMap) {
+    this.mapboxMap = mapboxMap;
     initTextViews();
     initButton();
   }
@@ -85,7 +90,7 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
       MapboxGeocoding client = MapboxGeocoding.builder()
           .accessToken(getString(R.string.access_token))
           .query(Point.fromLngLat(latLng.getLongitude(), latLng.getLatitude()))
-          .geocodingTypes(GeocodingCriteria.TYPE_COUNTRY)
+          .geocodingTypes(GeocodingCriteria.TYPE_ADDRESS)
           .build();
       client.enqueueCall(new Callback<GeocodingResponse>() {
         @Override
@@ -93,9 +98,15 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
                                Response<GeocodingResponse> response) {
           List<CarmenFeature> results = response.body().features();
           if (results.size() > 0) {
+
+            Log.d(TAG, "onResponse: results.size() > 0");
             CarmenFeature feature = results.get(0);
+
+            Log.d(TAG, "onResponse: feature = " + feature);
             geocodeResultTextView.setText(String.format(getString(R.string.geocode_results),
-                feature.placeName()));
+                feature.toString()));
+
+            animateCameraToNewPosition(latLng);
           } else {
             Toast.makeText(GeocodingActivity.this, R.string.no_results,
                 Toast.LENGTH_SHORT).show();
@@ -111,6 +122,13 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
       Log.e("GeocodingActivity", "Error geocoding: " + servicesException.toString());
       servicesException.printStackTrace();
     }
+  }
+
+  private void animateCameraToNewPosition(LatLng latLng) {
+    mapboxMap.animateCamera(CameraUpdateFactory
+        .newCameraPosition(new CameraPosition.Builder()
+            .target(latLng)
+            .build()),1500);
   }
 
   // Add the mapView lifecycle to the activity's lifecycle methods
