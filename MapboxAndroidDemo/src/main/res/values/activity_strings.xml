@@ -229,4 +229,6 @@
     <string name="geocode">Geocode</string>
     <string name="geocode_results">Geocode results: %1$s</string>
     <string name="no_results">No results!</string>
+    <string name="choose_city_spinner">Choose city</string>
+
 </resources>

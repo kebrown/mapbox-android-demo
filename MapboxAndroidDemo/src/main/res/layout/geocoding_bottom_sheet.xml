@@ -16,42 +16,61 @@
         android:layout_height="match_parent"
         >
 
+        <Button
+            android:id="@+id/choose_city_spinner_button"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_weight="1.25"
+            android:background="@color/mapboxBlue"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="@string/choose_city_spinner"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
 
         <EditText
             android:id="@+id/geocode_latitude_editText"
             android:layout_width="150dp"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="32dp"
             android:hint="@string/latitude"
             android:inputType="text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintBottom_toTopOf="@+id/geocode_longitude_editText"
+            app:layout_constraintTop_toTopOf="@id/choose_city_spinner_button"
+            tools:layout_editor_absoluteX="50dp"/>
 
 
         <EditText
             android:id="@+id/geocode_longitude_editText"
             android:layout_width="150dp"
             android:layout_height="45dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
             android:hint="@string/longitude"
             android:inputType="text"
+            app:layout_constraintBottom_toTopOf="@+id/start_geocode_button"
             app:layout_constraintStart_toStartOf="@+id/geocode_latitude_editText"
-            app:layout_constraintTop_toBottomOf="@+id/geocode_latitude_editText"/>
+            />
 
         <Button
             android:id="@+id/start_geocode_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
             android:backgroundTint="#37b426"
             android:text="@string/geocode"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/geocode_longitude_editText"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/geocode_longitude_editText"/>
+            />
 
         <ScrollView
             android:layout_width="0dp"
@@ -59,7 +78,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/geocode_longitude_editText"
-            app:layout_constraintTop_toTopOf="@+id/geocode_latitude_editText">
+            app:layout_constraintTop_toTopOf="@id/geocode_latitude_editText"
+            >
 
             <TextView
                 android:id="@+id/geocode_result_message"

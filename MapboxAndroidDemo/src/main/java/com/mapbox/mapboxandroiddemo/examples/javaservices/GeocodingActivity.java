@@ -3,8 +3,10 @@ package com.mapbox.mapboxandroiddemo.examples.javaservices;
 import android.os.Bundle;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.ListPopupWindow;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -25,6 +27,7 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -37,6 +40,7 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
   private MapboxMap mapboxMap;
   private BottomSheetBehavior sheetBehavior;
   private Button startGeocodeButton;
+  private Button chooseCityButton;
   private TextView latTextView;
   private TextView longTextView;
   private TextView geocodeResultTextView;
@@ -53,9 +57,6 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
     // This contains the MapView in XML and needs to be called after the access token is configured.
     setContentView(R.layout.activity_javaservices_geocoding);
 
-    LinearLayout bottomSheet = findViewById(R.id.bottom_sheet);
-    sheetBehavior = BottomSheetBehavior.from(bottomSheet);
-
     mapView = findViewById(R.id.mapView);
     mapView.onCreate(savedInstanceState);
     mapView.getMapAsync(this);
@@ -65,7 +66,7 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
   public void onMapReady(MapboxMap mapboxMap) {
     this.mapboxMap = mapboxMap;
     initTextViews();
-    initButton();
+    initButtons();
   }
 
   private void initTextViews() {
@@ -74,8 +75,9 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
     geocodeResultTextView = findViewById(R.id.geocode_result_message);
   }
 
-  private void initButton() {
+  private void initButtons() {
     startGeocodeButton = findViewById(R.id.start_geocode_button);
+    chooseCityButton = findViewById(R.id.choose_city_spinner_button);
     startGeocodeButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
@@ -83,6 +85,42 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
             Double.valueOf(longTextView.getText().toString())));
       }
     });
+    chooseCityButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        showCityListMenu();
+      }
+    });
+  }
+
+  private void showCityListMenu() {
+    List<String> modes = new ArrayList<>();
+    modes.add("Lima");
+    modes.add("Helsinki");
+    modes.add("Addis Ababa");
+    modes.add("Osaka");
+    ArrayAdapter<String> profileAdapter = new ArrayAdapter<>(this,
+        android.R.layout.simple_list_item_1, modes);
+    ListPopupWindow listPopup = new ListPopupWindow(this);
+    listPopup.setAdapter(profileAdapter);
+    listPopup.setAnchorView(chooseCityButton);
+    listPopup.setOnItemClickListener((parent, itemView, position, id) -> {
+      if (position == 0) {
+        animateCameraToNewPosition(new LatLng(42.8864, -78.878));
+        makeGeocodeSearch(new LatLng(42.8864, -78.878));
+      } else if (position == 1) {
+        animateCameraToNewPosition(new LatLng(60.1698, 24.938));
+        makeGeocodeSearch(new LatLng(60.1698, 24.938));
+      } else if (position == 2) {
+        animateCameraToNewPosition(new LatLng(8.980, 38.757));
+        makeGeocodeSearch(new LatLng(8.980, 38.757));
+      } else if (position == 3) {
+        animateCameraToNewPosition(new LatLng(34.693, 135.5021));
+        makeGeocodeSearch(new LatLng(34.693, 135.5021));
+      }
+      listPopup.dismiss();
+    });
+    listPopup.show();
   }
 
   private void makeGeocodeSearch(LatLng latLng) {
@@ -128,7 +166,8 @@ public class GeocodingActivity extends AppCompatActivity implements OnMapReadyCa
     mapboxMap.animateCamera(CameraUpdateFactory
         .newCameraPosition(new CameraPosition.Builder()
             .target(latLng)
-            .build()),1500);
+            .zoom(12)
+            .build()), 1500);
   }
 
   // Add the mapView lifecycle to the activity's lifecycle methods
