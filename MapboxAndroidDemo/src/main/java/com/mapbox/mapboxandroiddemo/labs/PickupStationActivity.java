@@ -1,12 +1,12 @@
 package com.mapbox.mapboxandroiddemo.labs;
 
-import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -15,7 +15,6 @@ import android.widget.ImageView;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
 import com.mapbox.geojson.Point;
-import com.mapbox.geojson.Polygon;
 import com.mapbox.mapboxandroiddemo.R;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
@@ -36,15 +35,18 @@ import com.mapbox.turf.TurfTransformation;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconAllowOverlap;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconSize;
+import static com.mapbox.turf.TurfConstants.UNIT_MILES;
+
 public class PickupStationActivity extends AppCompatActivity
     implements OnMapReadyCallback,
-    MapboxMap.OnCameraIdleListener {
-
-  private MapView mapView;
+    MapboxMap.OnCameraIdleListener, MapboxMap.OnCameraMoveStartedListener {
 
   private static final LatLngBounds AIRPORT_BOUNDS = new LatLngBounds.Builder()
-      .include(new LatLng(-9.136343, 109.372126))
-      .include(new LatLng(-44.640488, 158.590484))
+      .include(new LatLng(52.357950, 4.64160))
+      .include(new LatLng(52.237853, 4.88172))
       .build();
 
   private static final String STATION_IMAGE_ID = "STATION_IMAGE_ID";
@@ -54,13 +56,17 @@ public class PickupStationActivity extends AppCompatActivity
   private static final String TARGET_SYMBOL_LAYER_ID = "TARGET_SYMBOL_LAYER_ID";
   private static final String SELECTED_STATION_LAYER_ID = "SELECTED_STATION_LAYER_ID";
   private static final String SELECTED_STATION_SOURCE_ID = "SELECTED_STATION_SOURCE_ID";
+  private static final float UNSELECTED_STATION_MARKER_SIZE = .4f;
+  private static final float SELECTED_STATION_MARKER_SIZE = .6f;
   private MapboxMap mapboxMap;
+  private MapView mapView;
   private GeoJsonSource pickupLocationTargetGeoJsonSource;
   private Point targetPoint;
-  private LatLng closetStation;
+  private LatLng closestStation;
   private List<Point> stationPointList;
   private FeatureCollection stationFeatureCollection;
   private boolean stationSelected = false;
+  private String TAG = "PickupStationActivity";
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -80,19 +86,20 @@ public class PickupStationActivity extends AppCompatActivity
 
   @Override
   public void onMapReady(MapboxMap mapboxMap) {
-
     this.mapboxMap = mapboxMap;
 
     // Set bounds to Amsterdam airport
     mapboxMap.setLatLngBoundsForCameraTarget(AIRPORT_BOUNDS);
     mapboxMap.setMinZoomPreference(6);
-    initPickupLocationSymbolLayer();
+    initStationPointList();
+    initTargetLocationSymbolLayer();
     initPickupLocationSetterView();
     initStationSymbolLayer();
     initSelectedStationLayer();
+    mapboxMap.addOnCameraIdleListener(this);
   }
 
-  private void initPickupLocationSymbolLayer() {
+  private void initTargetLocationSymbolLayer() {
     FeatureCollection featureCollection =
         FeatureCollection.fromFeatures(new Feature[]{});
     pickupLocationTargetGeoJsonSource =
@@ -117,29 +124,30 @@ public class PickupStationActivity extends AppCompatActivity
     mapView.addView(targetMarker);
   }
 
+  private void initStationPointList() {
+    Log.d(TAG, "initStationPointList: ");
+    stationPointList = new ArrayList<>();
+    stationPointList.add(Point.fromLngLat(4.760532, 52.306163));
+    stationPointList.add(Point.fromLngLat(4.763428, 52.307468));
+    stationPointList.add(Point.fromLngLat(4.763357, 52.308859));
+    stationPointList.add(Point.fromLngLat(4.763619, 52.309737));
+    stationPointList.add(Point.fromLngLat(4.310131, 52.762107));
+  }
+
   private void initStationSymbolLayer() {
+    Log.d(TAG, "initStationSymbolLayer: ");
     // Add the stations' icon images to the map
     Bitmap icon = BitmapFactory.decodeResource(
         this.getResources(), R.drawable.ic_circle);
     mapboxMap.addImage(STATION_IMAGE_ID, icon);
-
-    stationPointList = new ArrayList<>();
-    stationPointList.add(Point.fromLngLat(52.306163, 4.760532));
-    stationPointList.add(Point.fromLngLat(52.307468, 4.763428));
-    stationPointList.add(Point.fromLngLat(52.308859, 4.763357));
-    stationPointList.add(Point.fromLngLat(52.309737, 4.763619));
-    stationPointList.add(Point.fromLngLat(52.762107, 4.310131));
-
-    stationFeatureCollection =
-        FeatureCollection.fromFeatures(new Feature[]{
-                Feature.fromGeometry(Point.fromLngLat(52.306163, 4.760532)),
-                Feature.fromGeometry(Point.fromLngLat(52.307468, 4.763428)),
-                Feature.fromGeometry(Point.fromLngLat(52.308859, 4.763357)),
-                Feature.fromGeometry(Point.fromLngLat(52.309737, 4.763619)),
-                Feature.fromGeometry(Point.fromLngLat(52.762107, 4.310131))
-            }
-        );
-
+    stationFeatureCollection = FeatureCollection.fromFeatures(new Feature[]{});
+    List<Feature> featureList = new ArrayList<>();
+    for (int x = 0; x < stationPointList.size(); x++) {
+      Log.d(TAG, "initStationSymbolLayer: x = " + x);
+      featureList.add(Feature.fromGeometry(
+          stationPointList.get(x)));
+    }
+    stationFeatureCollection = FeatureCollection.fromFeatures(featureList);
     String[] stationNames = new String[]{
         "Concourse B",
         "Concourse C",
@@ -147,37 +155,40 @@ public class PickupStationActivity extends AppCompatActivity
         "Concourse E",
         "Concourse F",
     };
-
     for (int x = 0; x < stationFeatureCollection.features().size(); x++) {
       stationFeatureCollection.features().get(x).addStringProperty(
           "STATION NAME", stationNames[x]);
     }
-
+    Log.d(TAG, "initStationSymbolLayer: stationFeatureCollection = "
+        + stationFeatureCollection.features().size());
     GeoJsonSource geoJsonSource =
         new GeoJsonSource(UNSELECTED_STATION_SOURCE_ID, stationFeatureCollection);
     mapboxMap.addSource(geoJsonSource);
     SymbolLayer stationSymbolLayer =
         new SymbolLayer(UNSELECTED_STATION_SYMBOL_LAYER, UNSELECTED_STATION_SOURCE_ID);
     stationSymbolLayer.withProperties(
-        PropertyFactory.iconImage(STATION_IMAGE_ID)
+        iconImage(STATION_IMAGE_ID),
+        iconSize(UNSELECTED_STATION_MARKER_SIZE),
+        iconAllowOverlap(true)
     );
     mapboxMap.addLayer(stationSymbolLayer);
   }
 
   private void initSelectedStationLayer() {
+    Log.d(TAG, "initSelectedStationLayer: ");
     FeatureCollection emptySource = FeatureCollection.fromFeatures(new Feature[]{});
     Source selectedMarkerSource = new GeoJsonSource(SELECTED_STATION_SOURCE_ID, emptySource);
     mapboxMap.addSource(selectedMarkerSource);
-
     SymbolLayer stationSymbolLayer =
         new SymbolLayer(SELECTED_STATION_LAYER_ID, SELECTED_STATION_SOURCE_ID);
     stationSymbolLayer.withProperties(
-        PropertyFactory.iconImage(STATION_IMAGE_ID)
+        iconImage(STATION_IMAGE_ID)
     );
     mapboxMap.addLayer(stationSymbolLayer);
   }
 
   private void moveTargetToStation(LatLng latLngDestination) {
+    Log.d(TAG, "moveTargetToStation: ");
     mapboxMap.moveCamera(CameraUpdateFactory
         .newCameraPosition(new CameraPosition.Builder()
             .target(latLngDestination) // Sets the new camera position
@@ -186,40 +197,37 @@ public class PickupStationActivity extends AppCompatActivity
 
   @Override
   public void onCameraIdle() {
+    Log.d(TAG, "onCameraIdle: ");
     targetPoint = Point.fromLngLat(
         mapboxMap.getCameraPosition().target.getLongitude(),
         mapboxMap.getCameraPosition().target.getLatitude());
     pickupLocationTargetGeoJsonSource.setGeoJson(FeatureCollection.fromFeature(
         Feature.fromGeometry(targetPoint)));
-
-    if (targetIsWithinStationPolygonArea(retrieveClosestPointToTarget(
-        new LatLng(targetPoint.latitude(), targetPoint.longitude())))) {
-
-
-      moveTargetToStation(retrieveClosestStation());
-
+    Point closestStation = retrieveClosestStationToTarget(
+        new LatLng(targetPoint.latitude(), targetPoint.longitude()));
+    if (targetIsWithinClosestStationArea(closestStation)) {
+      /*moveTargetToStation(new LatLng(closestStation.latitude(),
+          closestStation.longitude()));*/
       evaluateStationIconSize();
     }
   }
 
-  private boolean targetIsWithinStationPolygonArea(Point closetStation) {
-    Polygon circlePolygon = TurfTransformation.circle(closetStation, 40);
-    return TurfJoins.inside(targetPoint, circlePolygon);
+  @Override
+  public void onCameraMoveStarted(int reason) {
+    mapboxMap.addOnCameraIdleListener(this);
+
   }
 
-  private Point retrieveClosestPointToTarget(LatLng targetLocation) {
+  private boolean targetIsWithinClosestStationArea(Point closetStation) {
+    return TurfJoins.inside(targetPoint,
+        TurfTransformation.circle(closetStation, .2,
+            UNIT_MILES));
+  }
+
+  private Point retrieveClosestStationToTarget(LatLng targetLocation) {
     return TurfClassification.nearestPoint(
         Point.fromLngLat(targetLocation.getLongitude(), targetLocation.getLatitude()),
         stationPointList);
-  }
-
-  private LatLng retrieveClosestStation(LatLng targetLocation) {
-    for (Feature singleFeature : stationFeatureCollection.features()) {
-      if (targetLocation.equals()) {
-        return targetLocation;
-      }
-    }
-    return null;
   }
 
   private void evaluateStationIconSize() {
@@ -254,8 +262,9 @@ public class PickupStationActivity extends AppCompatActivity
 
   private void selectMarker(final SymbolLayer marker) {
     ValueAnimator markerAnimator = new ValueAnimator();
-    markerAnimator.setObjectValues(1f, 1.4f);
-    markerAnimator.setDuration(200);
+    markerAnimator.setObjectValues(UNSELECTED_STATION_MARKER_SIZE,
+        SELECTED_STATION_MARKER_SIZE);
+    markerAnimator.setDuration(100);
     markerAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
       @Override
       public void onAnimationUpdate(ValueAnimator animator) {
@@ -270,8 +279,9 @@ public class PickupStationActivity extends AppCompatActivity
 
   private void deselectStation(final SymbolLayer marker) {
     ValueAnimator markerAnimator = new ValueAnimator();
-    markerAnimator.setObjectValues(1.4f, 1f);
-    markerAnimator.setDuration(200);
+    markerAnimator.setObjectValues(SELECTED_STATION_MARKER_SIZE,
+        UNSELECTED_STATION_MARKER_SIZE);
+    markerAnimator.setDuration(100);
     markerAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
       @Override
       public void onAnimationUpdate(ValueAnimator animator) {
@@ -282,20 +292,6 @@ public class PickupStationActivity extends AppCompatActivity
     });
     markerAnimator.start();
     stationSelected = false;
-  }
-
-  private static class LatLngEvaluator implements TypeEvaluator<LatLng> {
-    // Method is used to interpolate the marker animation.
-    private LatLng latLng = new LatLng();
-
-    @Override
-    public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
-      latLng.setLatitude(startValue.getLatitude()
-          + ((endValue.getLatitude() - startValue.getLatitude()) * fraction));
-      latLng.setLongitude(startValue.getLongitude()
-          + ((endValue.getLongitude() - startValue.getLongitude()) * fraction));
-      return latLng;
-    }
   }
 
   // Add the mapView lifecycle to the activity's lifecycle methods
@@ -333,6 +329,7 @@ public class PickupStationActivity extends AppCompatActivity
   protected void onDestroy() {
     super.onDestroy();
     mapView.onDestroy();
+    mapboxMap.removeOnCameraIdleListener(this);
   }
 
   @Override

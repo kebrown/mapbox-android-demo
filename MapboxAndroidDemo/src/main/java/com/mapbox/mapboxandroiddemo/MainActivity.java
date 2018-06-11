@@ -660,7 +660,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         exampleItemModels.add(new ExampleItemModel(
             R.string.activity_labs_pickup_dropoff_station_title,
-            R.string.activity_labs_pickup_dropoff_station_title,
+            R.string.activity_labs_pickup_dropoff_station_description,
             new Intent(MainActivity.this, PickupStationActivity.class),
             R.string.activity_labs_pickup_dropoff_station_url, false, BuildConfig.MIN_SDK_VERSION
         ));
